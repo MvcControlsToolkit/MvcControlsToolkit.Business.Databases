@@ -31,6 +31,21 @@ namespace MvcControlsToolkit.Business.DocumentDB
         private static readonly ConcurrentDictionary<Type, PropertyInfo> KeyProperty = new ConcurrentDictionary<Type, PropertyInfo>();
         private static MethodInfo internalUpdateList = typeof(DocumentDBCRUDRepository<M>).GetTypeInfo().GetMethod("updateList", BindingFlags.Instance | BindingFlags.NonPublic);
         PropertyInfo lastKeyProperty = null;
+        public static string DefaultCombinedKey(string id, string partition)
+        {
+            return JsonConvert.SerializeObject(new KeyValuePair<string, string>(id, partition));
+        }
+        public static void DefaultSplitCombinedKey(string combinedKey, out string  id, out string partition)
+        {
+            id = null;
+            partition = null;
+            if (combinedKey == null) return;
+            var res=JsonConvert.DeserializeObject(combinedKey, typeof(KeyValuePair<string, string>)) ;
+            if (res == null) return;
+            var pair = (KeyValuePair<string, string>)res;
+            id = pair.Key; partition = pair.Value;
+            
+        }
         public static void DeclareProjection<K>(Expression<Func<M, K>> proj)
         {
             DefaultCRUDRepository<Microsoft.EntityFrameworkCore.DbContext, M>.DeclareProjection(proj);
@@ -62,7 +77,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
             
             foreach(var m in typeof(M).GetTypeInfo().GetProperties())
             {
-                if (keyProperty == null && (m.Name.ToLowerInvariant() == "id" || m.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == "id"))
+                if (keyProperty == null && ((m.Name.ToLowerInvariant() == "id" && keyProperty == null) || m.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == "id"))
                     keyProperty = m;
                 else if (partitionProperty == null && m.GetCustomAttribute<PartitionKeyAttribute>() != null)
                     partitionProperty = m;

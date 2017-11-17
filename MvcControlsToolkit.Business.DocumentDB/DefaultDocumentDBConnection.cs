@@ -29,5 +29,10 @@ namespace MvcControlsToolkit.Business.DocumentDB
             DatabaseId = databaseId;
             Client = new DocumentClient(new Uri(endpoint), key, connectionPolicy, consistencyLevel);
         }
+
+        public void Dispose()
+        {
+            Client.Dispose();
+        }
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.Azure.Documents.Client;
 
 namespace MvcControlsToolkit.Business.DocumentDB
 {
-    public interface IDocumentDBConnection
+    public interface IDocumentDBConnection: IDisposable
     {
         DocumentClient Client
         {

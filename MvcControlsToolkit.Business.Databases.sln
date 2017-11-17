@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.15
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MvcControlsToolkit.Business.DocumentDB", "MvcControlsToolkit.Business.DocumentDB\MvcControlsToolkit.Business.DocumentDB.csproj", "{9C1D3ECB-33EF-4B09-9A78-265959C7299F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MvcControlsToolkit.Business.DocumentDB", "MvcControlsToolkit.Business.DocumentDB\MvcControlsToolkit.Business.DocumentDB.csproj", "{9C1D3ECB-33EF-4B09-9A78-265959C7299F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MvcControlsToolkit.Business.DocumentDB.Test", "MvcControlsToolkit.Business.DocumentDB.Test\MvcControlsToolkit.Business.DocumentDB.Test.csproj", "{6F5BE495-241A-4ECC-9A48-C8CA1A3CE123}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{9C1D3ECB-33EF-4B09-9A78-265959C7299F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C1D3ECB-33EF-4B09-9A78-265959C7299F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C1D3ECB-33EF-4B09-9A78-265959C7299F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F5BE495-241A-4ECC-9A48-C8CA1A3CE123}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F5BE495-241A-4ECC-9A48-C8CA1A3CE123}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F5BE495-241A-4ECC-9A48-C8CA1A3CE123}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F5BE495-241A-4ECC-9A48-C8CA1A3CE123}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
