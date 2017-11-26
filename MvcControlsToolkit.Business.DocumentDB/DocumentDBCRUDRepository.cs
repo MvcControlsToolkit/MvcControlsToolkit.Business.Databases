@@ -224,8 +224,10 @@ namespace MvcControlsToolkit.Business.DocumentDB
             if (toDelete == null) toDelete = new List<Tuple<string, object>>();
             string tkey;
             object partitionKey;
-            getKeys(key, out tkey, out partitionKey);
-            toDelete.AddRange(key.Select(m => Tuple.Create(tkey, partitionKey)));
+            toDelete.AddRange(key.Select(m => {
+                getKeys(m, out tkey, out partitionKey);
+                return Tuple.Create(tkey, partitionKey);
+            }));
         }
         public virtual void Delete<U>(params U[] key)
         {
@@ -555,7 +557,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
                 
                 
                 string key = keyProperty.GetValue(item) as string;
-                object partitionKey = partitionProperty.GetValue(item);
+                object partitionKey = partitionProperty != null ? partitionProperty.GetValue(item) : null;
                 if (modificationFilter != null)
                 {
                     var res = await Table(1, partitionKey)
@@ -850,6 +852,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
 
             var pres = (await fquery.ExecuteNextAsync<M>()).FirstOrDefault();
             if (typeof(K) == typeof(M)) return pres == null ? default(K) : (K)(pres as object);
+            if (pres == null) return default(K);
             var copier = RecursiveCopiersCache.Get<M, K>();
             return copier.Copy(pres, default(K));
         }

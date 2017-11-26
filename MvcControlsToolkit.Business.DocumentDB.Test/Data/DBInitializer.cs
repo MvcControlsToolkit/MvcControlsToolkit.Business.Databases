@@ -181,9 +181,11 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
     public class DBInitializerQuery : DBInitializer
     {
         protected override string CollectionId { get { return "ItemsQuery"; } }
+        public ICRUDRepository RepositoryFiltered { get; set; }
         public DBInitializerQuery() : base()
         {
-            Repository = new DocumentDBCRUDRepository<Item>(Connection, CollectionId);
+            Repository = new DocumentDBCRUDRepository<Item>(Connection, CollectionId, simulateOperations: SimulateOperations.All);
+            RepositoryFiltered = new DocumentDBCRUDRepository<Item>(Connection, CollectionId, m => ! m.Completed, m => !m.Completed, SimulateOperations.All);
         }
         protected override bool CreateCollection()
         {
