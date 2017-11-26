@@ -13,7 +13,8 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.DTOs
 
         public IEnumerable<SubItemDTO> SubItems { get; set; }
 
-    
+        
+
         public string  AssignedToSurname { get; set; }
 
         public string AssignedToId { get; set; }
@@ -21,7 +22,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.DTOs
     }
     public class MainItemDTOPartition: MainItemDTO
     {
-        
-        
+        public string Key { get; set; }
+
     }
 }

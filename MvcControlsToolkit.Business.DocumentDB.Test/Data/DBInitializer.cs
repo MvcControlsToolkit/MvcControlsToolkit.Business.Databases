@@ -27,8 +27,9 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
                 (m => 
                     new MainItemDTO
                     {
+                        
                         SubItems=  m.SubItems.Select(l => new SubItemDTO { })
-                    }
+                    }, m => m.Id
                 );
             DocumentDBCRUDRepository<Item>
                .DeclareUpdateProjection<MainItemDTO>
@@ -46,7 +47,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
                     {
                         
                         SubItems = m.SubItems.Select(l => new SubItemDTOPartition { })
-                    }
+                    }, m => m.Key
                 );
             DocumentDBCRUDRepository<PItem>
                .DeclareUpdateProjection<MainItemDTO>
@@ -81,7 +82,8 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
             Connection = new DefaultDocumentDBConnection(Endpoint, Key, DatabaseId);
             Repository = new DocumentDBCRUDRepository<Item>(Connection, CollectionId);
             
-            if(CreateCollection()) InitData();
+            if(CreateCollection() ) InitData();
+
         }
         protected virtual void InitData()
         {
@@ -119,10 +121,12 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
                         Id=Guid.NewGuid().ToString()
                     });
                 }
+                curr.SubItems = innerlList;
             }
             foreach(var item in allItems)
             {
-                Connection.Client.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(DatabaseId, CollectionId), item);
+                var cres = Connection.Client.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(DatabaseId, CollectionId), item);
+                cres.Wait();
             }
         }
         public DBInitializer()
@@ -179,7 +183,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
         protected override string CollectionId { get { return "ItemsQuery"; } }
         public DBInitializerQuery() : base()
         {
-            Repository = new DocumentDBCRUDRepository<PItem>(Connection, CollectionId);
+            Repository = new DocumentDBCRUDRepository<Item>(Connection, CollectionId);
         }
         protected override bool CreateCollection()
         {
@@ -189,14 +193,17 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
                 res.Wait();
                 return false;
             }
-            catch (DocumentClientException e)
+            catch (Exception ex)
             {
+                DocumentClientException e = (ex as DocumentClientException)??(ex.InnerException as DocumentClientException);
                 if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
+                    var collection = new DocumentCollection { Id = CollectionId };
+                    collection.IndexingPolicy = new IndexingPolicy(new RangeIndex(DataType.String) { Precision = -1 });
+                    collection.IndexingPolicy.IndexingMode = IndexingMode.Consistent;
                     var fres= Connection.Client.CreateDocumentCollectionAsync(
                         UriFactory.CreateDatabaseUri(DatabaseId),
-                        new DocumentCollection { Id = CollectionId },
-                        new RequestOptions { OfferThroughput = 1000 });
+                        collection);
                     fres.Wait();
                 }
                 else

@@ -30,7 +30,7 @@
 
   <ItemGroup>
     
-    <PackageReference Include="MvcControlsToolkit.Core.Business" Version="2.1.0-beta-1" />
+    <PackageReference Include="MvcControlsToolkit.Core.Business" Version="2.1.0-beta-8" />
   </ItemGroup>
 
   
