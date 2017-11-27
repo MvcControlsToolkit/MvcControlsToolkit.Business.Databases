@@ -130,7 +130,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
 
             foreach (var m in typeof(M).GetTypeInfo().GetProperties())
             {
-                if (keyProperty == null && ((m.Name.ToLowerInvariant() == "id" && keyProperty == null) || m.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == "id"))
+                if ((m.Name.ToLowerInvariant() == "id" && keyProperty == null) || m.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == "id")
                     keyProperty = m;
                 else if (partitionProperty == null && m.GetCustomAttribute<PartitionKeyAttribute>() != null)
                     partitionProperty = m;
@@ -144,7 +144,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
             var pair = typeof(K);
             if (KeyProperty.TryGetValue(pair, out res))
                 return res;
-            PropertyInfo key = ((RecursiveCopiersCache.Get<K, M>() as RecursiveObjectCopier<K, M>)?
+            PropertyInfo key = (((RecursiveCopiersCache.Get<K, M>()??new RecursiveObjectCopier<K, M>()) as RecursiveObjectCopier<K, M>)?
                 .GetMappedProperty(combinedKeyProperty ?? keyProperty)) ??
                 typeof(K).GetTypeInfo().GetProperty((combinedKeyProperty ?? keyProperty)?.Name);
             if (key != null)
@@ -164,7 +164,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
             else
             {
                 var test = new M();
-                combinedKeyProperty.SetValue(inputKey, test);
+                combinedKeyProperty.SetValue(test, inputKey);
                 key = keyProperty.GetValue(test) as string;
                 partitionKey = partitionProperty.GetValue(test);
             }
@@ -354,7 +354,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
             if(itemsPerPage>0)
                 start = connection.Client.CreateDocumentQuery<M>(
                     UriFactory.CreateDocumentCollectionUri(connection.DatabaseId, collectionId),
-                        new FeedOptions { MaxItemCount = itemsPerPage });
+                        new FeedOptions { MaxItemCount = itemsPerPage, EnableCrossPartitionQuery = true });
             else
                 start = connection.Client.CreateDocumentQuery<M>(
                     UriFactory.CreateDocumentCollectionUri(connection.DatabaseId, collectionId));
@@ -445,7 +445,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
                 if(itemsPerPage>0)
                     toStart = connection.Client.CreateDocumentQuery<M>(
                         UriFactory.CreateDocumentCollectionUri(connection.DatabaseId, collectionId),
-                        new FeedOptions { MaxItemCount = itemsPerPage}).Where(BuildKeysFilter(allIds));
+                        new FeedOptions { MaxItemCount = itemsPerPage, EnableCrossPartitionQuery = true }).Where(BuildKeysFilter(allIds));
                 else
                     toStart = connection.Client.CreateDocumentQuery<M>(
                         UriFactory.CreateDocumentCollectionUri(connection.DatabaseId, collectionId))
@@ -796,19 +796,20 @@ namespace MvcControlsToolkit.Business.DocumentDB
             return connection.Client.CreateDocumentQuery<M>(UriFactory.CreateDocumentCollectionUri(connection.DatabaseId, collectionId),
                 partitionKey != null ?
                     new FeedOptions { MaxItemCount = pageSize, PartitionKey = new PartitionKey(partitionKey), RequestContinuation = continuationToken } :
-                    new FeedOptions { MaxItemCount = pageSize, RequestContinuation=continuationToken });
+                    new FeedOptions { MaxItemCount = pageSize, RequestContinuation=continuationToken, EnableCrossPartitionQuery = true });
         }
         public IQueryable<N> Table<N>(int? pageSize = null, object partitionKey = null, string continuationToken = null)
         {
             return connection.Client.CreateDocumentQuery<N>(UriFactory.CreateDocumentCollectionUri(connection.DatabaseId, collectionId),
                 partitionKey == null ?
                     new FeedOptions { MaxItemCount = pageSize, PartitionKey = new PartitionKey(partitionKey), RequestContinuation = continuationToken } :
-                    new FeedOptions { MaxItemCount = pageSize, RequestContinuation = continuationToken });
+                    new FeedOptions { MaxItemCount = pageSize, RequestContinuation = continuationToken, EnableCrossPartitionQuery = true });
         }
         public async Task<IList<K>>  ToList<K>(IQueryable<M> query, int toSkip=0)
         {
             var selection=GetProprtiesSelectionExpression<K>();
-            query = query.Select(selection);
+            if (selection != null)
+                query = query.Select(selection);
             var fquery = query.AsDocumentQuery<M>();
             var res = new List<M>();
             int count = 0;
@@ -826,7 +827,8 @@ namespace MvcControlsToolkit.Business.DocumentDB
         public async Task<DataSequence<K, string>> ToSequence<K>(IQueryable<M> query)
         {
             var selection = GetProprtiesSelectionExpression<K>();
-            query = query.Select(selection);
+            if (selection != null)
+                query = query.Select(selection);
             var fquery = query.AsDocumentQuery<M>();
             
             var pres = await fquery.ExecuteNextAsync<M>();
@@ -847,10 +849,12 @@ namespace MvcControlsToolkit.Business.DocumentDB
         public async Task<K> FirstOrDefault<K>(IQueryable<M> query) 
         {
             var selection = GetProprtiesSelectionExpression<K>();
-            query = query.Select(selection);
+            if(selection != null)
+                query = query.Select(selection);
             var fquery = query.AsDocumentQuery<M>();
 
-            var pres = (await fquery.ExecuteNextAsync<M>()).FirstOrDefault();
+            var presList = (await fquery.ExecuteNextAsync<M>());
+            var pres=presList.FirstOrDefault();
             if (typeof(K) == typeof(M)) return pres == null ? default(K) : (K)(pres as object);
             if (pres == null) return default(K);
             var copier = RecursiveCopiersCache.Get<M, K>();

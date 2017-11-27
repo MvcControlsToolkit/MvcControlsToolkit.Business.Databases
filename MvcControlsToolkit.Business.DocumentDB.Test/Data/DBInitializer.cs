@@ -47,10 +47,10 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
                     {
                         
                         SubItems = m.SubItems.Select(l => new SubItemDTOPartition { })
-                    }, m => m.Key
+                    }, m => m.Id
                 );
             DocumentDBCRUDRepository<PItem>
-               .DeclareUpdateProjection<MainItemDTO>
+               .DeclareUpdateProjection<MainItemDTOPartition>
                (m =>
                    new PItem
                    {
@@ -72,8 +72,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
             }
             var cres = Connection.Client.CreateDocumentCollectionAsync(
                         UriFactory.CreateDatabaseUri(DatabaseId),
-                        new DocumentCollection { Id = CollectionId },
-                        new RequestOptions { OfferThroughput = 1000 });
+                        new DocumentCollection { Id = CollectionId });
             cres.Wait();
             return true;
         }
@@ -139,17 +138,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
             Connection.Dispose();
         }
     }
-    public class DBInitializerFiltered: DBInitializer
-    {
-        public DBInitializerFiltered(): base()
-        {
-            Repository = new DocumentDBCRUDRepository<Item>(Connection, 
-                CollectionId, 
-                m => m.AssignedTo.Surname == "Abbruzzese",
-                m => m.AssignedTo.Surname == "Abbruzzese" && !m.Completed);
-        }
-
-    }
+    
     public class DBInitializerPartition : DBInitializer
     {
         public DBInitializerPartition(): base()
@@ -168,11 +157,10 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
 
             }
             var collection = new DocumentCollection { Id = CollectionId };
-            collection.PartitionKey.Paths.Add("/name");
+            collection.PartitionKey.Paths.Add("/Name");
             var cres = Connection.Client.CreateDocumentCollectionAsync(
                         UriFactory.CreateDatabaseUri(DatabaseId),
-                        collection,
-                        new RequestOptions { OfferThroughput = 1000 });
+                        collection);
             cres.Wait();
             return true;
         }
@@ -217,6 +205,49 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
            
             
         }
+        
 
+        }
+    public class DBInitializerPartitionQuery : DBInitializer
+    {
+        protected override string CollectionId { get { return "ItemsPartitionQuery"; } }
+        public ICRUDRepository RepositoryFiltered { get; set; }
+        public DBInitializerPartitionQuery() : base()
+        {
+
+            Repository = new DocumentDBCRUDRepository<PItem>(Connection, CollectionId, simulateOperations: SimulateOperations.All);
+            RepositoryFiltered = new DocumentDBCRUDRepository<PItem>(Connection, CollectionId, m => !m.Completed, m => !m.Completed, SimulateOperations.All);
+        }
+        protected override bool CreateCollection()
+        {
+            try
+            {
+                var res = Connection.Client.ReadDocumentCollectionAsync(UriFactory.CreateDocumentCollectionUri(DatabaseId, CollectionId));
+                res.Wait();
+                return false;
+            }
+            catch (Exception ex)
+            {
+                DocumentClientException e = (ex as DocumentClientException) ?? (ex.InnerException as DocumentClientException);
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    var collection = new DocumentCollection { Id = CollectionId };
+                    collection.PartitionKey.Paths.Add("/Name");
+                    collection.IndexingPolicy = new IndexingPolicy(new RangeIndex(DataType.String) { Precision = -1 });
+                    collection.IndexingPolicy.IndexingMode = IndexingMode.Consistent;
+                    var cres = Connection.Client.CreateDocumentCollectionAsync(
+                                UriFactory.CreateDatabaseUri(DatabaseId),
+                                collection);
+                    cres.Wait();
+
+                }
+                else
+                {
+                    throw;
+                }
+                return true;
+            }
+
+        }
     }
 }

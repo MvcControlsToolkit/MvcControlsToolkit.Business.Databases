@@ -22,7 +22,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.DTOs
     }
     public class MainItemDTOPartition: MainItemDTO
     {
-        public string Key { get; set; }
+        public string CombinedId { get; set; }
 
     }
 }

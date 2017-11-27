@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using MvcControlsToolkit.Core.DataAnnotations;
 
 namespace MvcControlsToolkit.Business.DocumentDB.Internal
 {
@@ -24,7 +25,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Internal
         {
             DependencyTracker res;
             var curr = properties.Pop();
-            
+            if (curr.GetCustomAttribute(typeof(CombinedKeyAttribute)) != null) return;
             if (registry.TryGetValue(curr, out res))
             {
                 if (properties.Count != 0)

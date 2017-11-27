@@ -29,7 +29,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Models
     public class PItem
     {
         [CombinedKey, JsonIgnore]
-        public string Id {
+        public string CombinedId {
             get {
                 return
                 DocumentDBCRUDRepository<PItem>.DefaultCombinedKey(Id, Name);   
@@ -37,15 +37,15 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Models
             set {
                 string id, p;
                 DocumentDBCRUDRepository<PItem>.DefaultSplitCombinedKey(value, out id, out p);
-                Key = id; Name = p;
+                Id = id; Name = p;
             } }
 
         [JsonProperty(PropertyName = "id")]
-        public string Key { get; set; }
-        [JsonProperty(PropertyName = "name"), PartitionKey]
+        public string Id { get; set; }
+        [PartitionKey]
         public string Name { get; set; }
 
-        [JsonProperty(PropertyName = "description")]
+        
         public string Description { get; set; }
 
         [JsonProperty(PropertyName = "subItems"), CollectionKey("Id")]
