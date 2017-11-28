@@ -63,16 +63,19 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
         {
             try
             {
-                var res = Connection.Client.DeleteDocumentCollectionAsync(CollectionId);
+                var res = Connection.Client.DeleteDocumentCollectionAsync(UriFactory.CreateDocumentCollectionUri(DatabaseId, CollectionId));
                 res.Wait();
             }
-            catch
+            catch(Exception ex)
             {
-
+                var exc = ex;
             }
+            var collection = new DocumentCollection { Id = CollectionId };
+            collection.IndexingPolicy = new IndexingPolicy(new RangeIndex(DataType.String) { Precision = -1 });
+            collection.IndexingPolicy.IndexingMode = IndexingMode.Consistent;
             var cres = Connection.Client.CreateDocumentCollectionAsync(
                         UriFactory.CreateDatabaseUri(DatabaseId),
-                        new DocumentCollection { Id = CollectionId });
+                        collection);
             cres.Wait();
             return true;
         }
@@ -149,7 +152,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
         {
             try
             {
-                var res = Connection.Client.DeleteDocumentCollectionAsync(CollectionId);
+                var res = Connection.Client.DeleteDocumentCollectionAsync(UriFactory.CreateDocumentCollectionUri(DatabaseId, CollectionId));
                 res.Wait();
             }
             catch
@@ -158,6 +161,8 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
             }
             var collection = new DocumentCollection { Id = CollectionId };
             collection.PartitionKey.Paths.Add("/Name");
+            collection.IndexingPolicy = new IndexingPolicy(new RangeIndex(DataType.String) { Precision = -1 });
+            collection.IndexingPolicy.IndexingMode = IndexingMode.Consistent;
             var cres = Connection.Client.CreateDocumentCollectionAsync(
                         UriFactory.CreateDatabaseUri(DatabaseId),
                         collection);

@@ -605,7 +605,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
                     if (simulation != null) simulation.Updates.Add(old);
                     else
                         await connection.Client.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(connection.DatabaseId, collectionId, item.Item2),
-                            item, item.Item3 == null ? null : new RequestOptions { PartitionKey = new PartitionKey(item.Item3) });
+                            old, item.Item3 == null ? null : new RequestOptions { PartitionKey = new PartitionKey(item.Item3) });
                     succeded.PartialUpdates.Add(item);
                 }
             }
