@@ -805,60 +805,75 @@ namespace MvcControlsToolkit.Business.DocumentDB
                     new FeedOptions { MaxItemCount = pageSize, PartitionKey = new PartitionKey(partitionKey), RequestContinuation = continuationToken } :
                     new FeedOptions { MaxItemCount = pageSize, RequestContinuation = continuationToken, EnableCrossPartitionQuery = true });
         }
-        public async Task<IList<K>>  ToList<K>(IQueryable<M> query, int toSkip=0)
+        public async Task<IList<K>>  ToList<K, N>(IQueryable<N> query, int toSkip=0)
+            where N : class, new()
         {
-            var selection=GetProprtiesSelectionExpression<K>();
+            var selection= DocumentDBCRUDRepository<N>.GetProprtiesSelectionExpression<K>();
             if (selection != null)
                 query = query.Select(selection);
-            var fquery = query.AsDocumentQuery<M>();
-            var res = new List<M>();
+            var fquery = query.AsDocumentQuery();
+            var res = new List<N>();
             int count = 0;
             while(fquery.HasMoreResults)
             {
-                var pres = await fquery.ExecuteNextAsync<M>();
+                var pres = await fquery.ExecuteNextAsync<N>();
                 if (count >= toSkip)
                     res.AddRange(pres);
             };
-            if (typeof(K) == typeof(M)) return res as List<K>;
-            var copier = RecursiveCopiersCache.Get<M, K>();
+            if (typeof(K) == typeof(N)) return res as List<K>;
+            var copier = RecursiveCopiersCache.Get<N, K>();
             return res.Select(m => copier.Copy(m, default(K)))
                 .ToList();
         }
-        public async Task<DataSequence<K, string>> ToSequence<K>(IQueryable<M> query)
+        public async Task<IList<K>> ToList<K>(IQueryable<M> query, int toSkip = 0)
         {
-            var selection = GetProprtiesSelectionExpression<K>();
+            return await ToList<K, M>(query, toSkip);
+        }
+        public async Task<DataSequence<K, string>> ToSequence<K, N>(IQueryable<N> query)
+             where N : class, new()
+        {
+            var selection = DocumentDBCRUDRepository<N>.GetProprtiesSelectionExpression<K>();
             if (selection != null)
                 query = query.Select(selection);
-            var fquery = query.AsDocumentQuery<M>();
+            var fquery = query.AsDocumentQuery();
             
-            var pres = await fquery.ExecuteNextAsync<M>();
+            var pres = await fquery.ExecuteNextAsync<N>();
             var res = new DataSequence<K, string>
             {
                 Continuation = pres.ResponseContinuation
             };
-            if (typeof(K) == typeof(M))
+            if (typeof(K) == typeof(N))
             {
                 res.Data = pres.ToList() as List<K>;
                 return res;
             }
-            var copier = RecursiveCopiersCache.Get<M, K>();
+            var copier = RecursiveCopiersCache.Get<N, K>();
             res.Data = pres.Select(m => copier.Copy(m, default(K)))
                 .ToList();
             return res;
         }
-        public async Task<K> FirstOrDefault<K>(IQueryable<M> query) 
+        public async Task<DataSequence<K, string>> ToSequence<K>(IQueryable<M> query)
         {
-            var selection = GetProprtiesSelectionExpression<K>();
+            return await ToSequence<K, M>(query);
+        }
+        public async Task<K> FirstOrDefault<K, N>(IQueryable<N> query)
+            where N : class, new()
+        {
+            var selection = DocumentDBCRUDRepository<N>.GetProprtiesSelectionExpression<K>();
             if(selection != null)
                 query = query.Select(selection);
-            var fquery = query.AsDocumentQuery<M>();
+            var fquery = query.AsDocumentQuery();
 
-            var presList = (await fquery.ExecuteNextAsync<M>());
+            var presList = (await fquery.ExecuteNextAsync<N>());
             var pres=presList.FirstOrDefault();
-            if (typeof(K) == typeof(M)) return pres == null ? default(K) : (K)(pres as object);
+            if (typeof(K) == typeof(N)) return pres == null ? default(K) : (K)(pres as object);
             if (pres == null) return default(K);
-            var copier = RecursiveCopiersCache.Get<M, K>();
+            var copier = RecursiveCopiersCache.Get<N, K>();
             return copier.Copy(pres, default(K));
+        }
+        public async Task<K> FirstOrDefault<K>(IQueryable<M> query)
+        {
+            return await FirstOrDefault<K, M>(query);
         }
     }
 }
