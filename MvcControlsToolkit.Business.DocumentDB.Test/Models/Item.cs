@@ -13,7 +13,9 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Models
         
         public string Name { get; set; }
 
-        
+        [JsonProperty(PropertyName = "_ETag", NullValueHandling = NullValueHandling.Ignore)]
+        public string MyTag { get; set; }
+
         public string Description { get; set; }
 
         [JsonProperty(PropertyName = "subItems"), CollectionKey("Id")]

@@ -30,12 +30,14 @@ namespace MvcControlsToolkit.Business.DocumentDB
         List<M> toModifyFull = null;
         List<Tuple<Action<M>, string, object>> toModifyPartial = null;
         Expression<Func<M, bool>> selectFilter, modificationFilter;
-        static PropertyInfo keyProperty, partitionProperty, combinedKeyProperty;
+        static PropertyInfo keyProperty, partitionProperty, combinedKeyProperty, tagProperty;
         private static readonly ConcurrentDictionary<Type, PropertyInfo> KeyProperty = new ConcurrentDictionary<Type, PropertyInfo>();
         private static MethodInfo internalUpdateList = typeof(DocumentDBCRUDRepository<M>).GetTypeInfo().GetMethod("updateList", BindingFlags.Instance | BindingFlags.NonPublic);
         PropertyInfo lastKeyProperty = null;
         private SimulateOperations simulateOperations;
         public DocumentsUpdateSimulationResult<M> SimulationResult { get; private set; }
+        public Expression<Func<M, bool>> SelectFilter { get { return selectFilter; } }
+        public Expression<Func<M, bool>> ModificationFilter { get { return modificationFilter; } }
         public static string DefaultCombinedKey(string id, string partition)
         {
             return JsonConvert.SerializeObject(new KeyValuePair<string, string>(id, partition));
@@ -130,8 +132,10 @@ namespace MvcControlsToolkit.Business.DocumentDB
 
             foreach (var m in typeof(M).GetTypeInfo().GetProperties())
             {
-                if ((m.Name.ToLowerInvariant() == "id" && keyProperty == null) || m.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName == "id")
+                var jname = m.GetCustomAttribute<JsonPropertyAttribute>()?.PropertyName;
+                if ((m.Name.ToLowerInvariant() == "id" && keyProperty == null) || jname == "id")
                     keyProperty = m;
+                else if ((m.Name  == "_Etag" && tagProperty== null) || jname== "_Etag") tagProperty = m;
                 else if (partitionProperty == null && m.GetCustomAttribute<PartitionKeyAttribute>() != null)
                     partitionProperty = m;
                 else if (combinedKeyProperty == null && m.GetCustomAttribute<CombinedKeyAttribute>() != null)
@@ -602,10 +606,15 @@ namespace MvcControlsToolkit.Business.DocumentDB
                 if(old != null)
                 {
                     item.Item1(old);
+                    string tag = tagProperty == null ? null : tagProperty.GetValue(old).ToString();
+                    if (tagProperty != null) tagProperty.SetValue(old, null);
                     if (simulation != null) simulation.Updates.Add(old);
                     else
                         await connection.Client.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(connection.DatabaseId, collectionId, item.Item2),
-                            old, item.Item3 == null ? null : new RequestOptions { PartitionKey = new PartitionKey(item.Item3) });
+                            old, item.Item3 == null && tag == null? null : new RequestOptions { PartitionKey = item.Item3 == null ? null : new PartitionKey(item.Item3),
+                                                AccessCondition = tag == null? null : 
+                                                    new AccessCondition { Condition = tag, Type = AccessConditionType.IfMatch }
+                            });
                     succeded.PartialUpdates.Add(item);
                 }
             }

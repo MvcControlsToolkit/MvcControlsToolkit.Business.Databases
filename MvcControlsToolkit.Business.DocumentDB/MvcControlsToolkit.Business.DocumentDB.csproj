@@ -4,7 +4,7 @@
     <Description>Mvc controls toolkit CosmoDB/DocumentDB utilities</Description>
     <Copyright>Mvc Controls Toolkit Team</Copyright>
     <AssemblyTitle>Mvc controls toolkit CosmoDB/DocumentDB utilities</AssemblyTitle>
-    <VersionPrefix>1.0.1</VersionPrefix>
+    <VersionPrefix>1.0.2</VersionPrefix>
     
     <Authors>Francesco Abbruzzese;Mvc Controls Toolkit Team</Authors>
     <TargetFrameworks>net451;netstandard1.6;netstandard2.0</TargetFrameworks>
@@ -14,7 +14,7 @@
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
     <PackageId>MvcControlsToolkit.Business.DocumentDB</PackageId>
     <PackageTags>aspnetcore;dotnetcore;documentdb;business</PackageTags>
-    <PackageReleaseNotes>Bug fix release</PackageReleaseNotes>
+    <PackageReleaseNotes>Added automatic optimistic scheduling</PackageReleaseNotes>
     <PackageIconUrl>https://avatars2.githubusercontent.com/u/15634526?v=3&amp;s=200</PackageIconUrl>
     <PackageProjectUrl>https://github.com/MvcControlsToolkit/MvcControlsToolkit.Business.Databases</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/MvcControlsToolkit/Home/blob/master/LICENSE.txt</PackageLicenseUrl>
