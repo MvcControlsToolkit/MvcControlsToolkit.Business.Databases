@@ -196,6 +196,14 @@ namespace MvcControlsToolkit.Business.DocumentDB
             this.simulateOperations = simulateOperations;
 
         }
+        public virtual void BeforeUpdate(M entity, bool full, object dto)
+        {
+
+        }
+        public virtual void BeforeAdd(M entity, bool full, object dto)
+        {
+
+        }
         public Func<object, object> GetKey
         {
             get
@@ -214,6 +222,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
             {
                 var fm = copier.Copy(m, null);
                 lastKeyProperty.SetValue(m, (combinedKeyProperty ?? keyProperty).GetValue(fm));
+                BeforeAdd(fm, full, m);
                 toAdd.Add(fm);
             }
 
@@ -523,6 +532,14 @@ namespace MvcControlsToolkit.Business.DocumentDB
             }
 
             res.Data = results;
+            if (res.Data.Count == 0)
+            {
+                res.TotalCount = res.TotalPages = 0;
+            }
+            else if (res.Data.Count < itemsPerPage)
+            {
+                res.TotalPages = 1;
+            }
             return res;
         }
         private async Task handleAddition(
@@ -755,7 +772,11 @@ namespace MvcControlsToolkit.Business.DocumentDB
             {
                 if (toModifyFull == null) toModifyFull = new List<M>();
                 var copier = RecursiveCopiersCache.Get<T, M>() ?? new RecursiveObjectCopier<T, M>();
-                toModifyFull.AddRange(viewModel.Select(m => copier.Copy(m, null)));
+                toModifyFull.AddRange(viewModel.Select(m => {
+                    var res=copier.Copy(m, null);
+                    BeforeUpdate(res, true, m);
+                    return res;
+                    }));
             }
             else
             {
@@ -769,6 +790,7 @@ namespace MvcControlsToolkit.Business.DocumentDB
                     return Tuple.Create<Action<M>, string, object>(x =>
                     {
                         copier.Copy(m, x);
+                        BeforeUpdate(x, true, m);
                     }, tKey, partitionKey);
                 }
                 ));

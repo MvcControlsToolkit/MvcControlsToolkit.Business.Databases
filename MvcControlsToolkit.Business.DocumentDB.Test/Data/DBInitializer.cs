@@ -7,12 +7,13 @@ using MvcControlsToolkit.Business.DocumentDB.Test.DTOs;
 using MvcControlsToolkit.Core.Business.Utilities;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents;
+using MvcControlsToolkit.Core.Business.Transformations;
 
 namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
 {
     public class DBInitializer: IDisposable
     {
-        protected static readonly string Endpoint = "https://mvcct.documents.azure.com:443/";
+        protected static readonly string Endpoint = "...";
         protected static readonly string Key = "...";
         protected static readonly string DatabaseId = "ToDoList";
         protected virtual string CollectionId { get { return "ItemsTest"; } }
@@ -58,6 +59,15 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.Data
                        AssignedTo = m.AssignedToId == null ? null : new Person { }
                    }
                );
+            MappingContext.Default.Add<MainItemDTO, MainItemVM>(
+                m => new MainItemVM {
+                SubItems = m.SubItems.Select(l => new SubItemVM { })
+            });
+            MappingContext.Default.Add<MainItemVM, MainItemDTO>(
+                m => new MainItemDTO
+                {
+                    SubItems = m.SubItems.Select(l => new SubItemDTO { })
+                });
         }
         protected virtual bool CreateCollection()
         {

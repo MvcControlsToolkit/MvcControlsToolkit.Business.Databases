@@ -15,4 +15,10 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test.DTOs
     {
         
     }
+    public class SubItemVM
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+    }
 }
