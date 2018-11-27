@@ -532,13 +532,16 @@ namespace MvcControlsToolkit.Business.DocumentDB
             }
 
             res.Data = results;
-            if (res.Data.Count == 0)
+            if (page == 0)
             {
-                res.TotalCount = res.TotalPages = 0;
-            }
-            else if (res.Data.Count < itemsPerPage)
-            {
-                res.TotalPages = 1;
+                if (res.Data.Count == 0)
+                {
+                    res.TotalCount = res.TotalPages = 0;
+                }
+                else if (res.Data.Count < itemsPerPage)
+                {
+                    res.TotalPages = 1;
+                }
             }
             return res;
         }

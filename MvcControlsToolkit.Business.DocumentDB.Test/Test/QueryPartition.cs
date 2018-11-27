@@ -448,7 +448,7 @@ namespace MvcControlsToolkit.Business.DocumentDB.Test
             {
                 Id = res.Id,
                 CombinedId=res.CombinedId,
-                Name = "AddedName",
+                Name = "Name3",
                 Description = "AddedDescription",
                 AssignedToId = "AddedOwner",
                 AssignedToSurname = "AddedOwnerSurname",
